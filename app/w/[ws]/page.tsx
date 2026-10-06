@@ -4,7 +4,7 @@ import { FolderOpen, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
 import { getIdentity, getWorkspaceBySlug, listProjects } from "@/lib/server/data";
 import { projectHref, STATUS_LABEL } from "@/lib/routes";
@@ -48,8 +48,15 @@ export default async function Dashboard({ params }: { params: Promise<{ ws: stri
                     <FolderOpen />
                   </EmptyMedia>
                   <EmptyTitle>No projects yet</EmptyTitle>
-                  <EmptyDescription>Start with an idea.</EmptyDescription>
+                  <EmptyDescription>Turn one idea into scripts, still prompts, and video prompts.</EmptyDescription>
                 </EmptyHeader>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href={`/w/${ws}/new`}>
+                      <Plus data-icon="inline-start" /> New project
+                    </Link>
+                  </Button>
+                </EmptyContent>
               </Empty>
             ) : (
               projects.slice(0, 12).map((p) => (

@@ -12,6 +12,7 @@ import {
 import { CopyButton } from "@/components/copy-button";
 import { SavePromptDialog } from "@/components/prompts/save-prompt-dialog";
 import { SendToFlowButton, SendAllButton } from "@/components/send-to-flow";
+import { DiscardEditsButton } from "@/components/confirm-delete";
 import { ErrorNote, useRun } from "@/components/use-run";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -287,9 +288,7 @@ function StillCard({
                 >
                   <Check data-icon="inline-start" /> Save as new version
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-                  Cancel
-                </Button>
+                  <DiscardEditsButton dirty={draft !== current.body} onDiscard={() => setEditing(false)} />
               </>
             ) : (
               <>

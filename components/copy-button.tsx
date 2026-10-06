@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 export function CopyButton({
@@ -18,10 +19,15 @@ export function CopyButton({
     <Button
       size="sm"
       variant={variant}
+      disabled={!text}
       onClick={async () => {
-        await navigator.clipboard.writeText(text);
-        setDone(true);
-        setTimeout(() => setDone(false), 1500);
+        try {
+          await navigator.clipboard.writeText(text);
+          setDone(true);
+          setTimeout(() => setDone(false), 1500);
+        } catch {
+          toast.error("Could not copy. Check clipboard permission and try again.");
+        }
       }}
     >
       {done ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}

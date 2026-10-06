@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { validateMime } from "@/lib/server/assets";
+import { validateUpload } from "@/lib/media";
 import { bucketFor, signedUrl } from "@/lib/server/data";
 import { db, must } from "@/lib/server/supabase";
 import type { Asset, AssetKind, PromptKind, SavedPrompt } from "@/lib/supabase/types";
@@ -13,11 +13,6 @@ const EXT_BY_MIME: Record<string, string> = {
   "video/mp4": "mp4",
   "video/webm": "webm",
   "video/quicktime": "mov",
-};
-
-const MAX_BYTES: Record<AssetKind, number> = {
-  image: 20 * 1024 * 1024,
-  video: 200 * 1024 * 1024,
 };
 
 export function sampleKindFor(kind: PromptKind): AssetKind {
@@ -42,10 +37,12 @@ export async function uploadSampleFile(args: {
   mimeType: string;
 }): Promise<{ path: string; sampleKind: AssetKind }> {
   const sampleKind = sampleKindFor(args.promptKind);
-  const mime = validateMime(sampleKind, args.mimeType);
-  if (args.data.byteLength > MAX_BYTES[sampleKind]) {
-    throw new Error(`Sample is larger than ${sampleKind === "image" ? "20" : "200"} MB`);
-  }
+  const checked = validateUpload(sampleKind, {
+    type: args.mimeType,
+    size: args.data.byteLength,
+  });
+  if (!checked.ok) throw new Error(checked.error);
+  const mime = checked.mime;
   const path = `saved/${args.workspaceId}/${args.savedId}-${randomUUID()}.${extFor(mime, sampleKind)}`;
   const up = await db().storage.from(bucketFor(sampleKind)).upload(path, args.data, {
     contentType: mime,

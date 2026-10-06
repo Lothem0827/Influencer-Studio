@@ -20,10 +20,23 @@ function slugify(s: string): string {
 
 /* ---------- workspaces ---------- */
 
+async function uniqueSlug(base: string): Promise<string> {
+  if (!base) return "";
+  let slug = base;
+  let n = 2;
+  while (n < 50) {
+    const { data } = await db().from("workspaces").select("id").eq("slug", slug).maybeSingle();
+    if (!data) return slug;
+    slug = `${base}-${n++}`;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 export async function createWorkspace(fd: FormData) {
-  const name = z.string().trim().min(1).parse(str(fd, "name"));
-  const slug = slugify(str(fd, "slug") || name);
-  if (!slug) throw new Error("Invalid name");
+  const name = str(fd, "name").trim();
+  if (!name) redirect(`/?error=${encodeURIComponent("Name is required")}`);
+  const slug = await uniqueSlug(slugify(str(fd, "slug") || name));
+  if (!slug) redirect(`/?error=${encodeURIComponent("Name needs at least one letter or number")}`);
   const ws = must(
     await db()
       .from("workspaces")

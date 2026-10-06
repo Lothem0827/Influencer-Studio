@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { db, must } from "@/lib/server/supabase";
 import { advanceClip, bumpProject } from "@/lib/server/pipeline";
 import { bucketFor } from "@/lib/server/data";
+import { validateUpload } from "@/lib/media";
 import type { Asset, AssetKind, AssetSource, Clip } from "@/lib/supabase/types";
 
 const EXT_BY_MIME: Record<string, string> = {
@@ -15,11 +16,6 @@ const EXT_BY_MIME: Record<string, string> = {
   "video/quicktime": "mov",
 };
 
-export function validateMime(kind: AssetKind, mime: string): string {
-  if (!mime.startsWith(`${kind}/`)) throw new Error(`Expected a ${kind} file, got ${mime || "unknown type"}`);
-  return mime;
-}
-
 /** Upload a file to Storage, create the asset row, and advance clip/project status. */
 export async function saveAsset(args: {
   clipId: string;
@@ -27,9 +23,16 @@ export async function saveAsset(args: {
   source: AssetSource;
   data: ArrayBuffer | Uint8Array;
   mimeType: string;
+  filename?: string;
   flowUrl?: string | null;
 }): Promise<Asset> {
-  const mime = validateMime(args.kind, args.mimeType);
+  const checked = validateUpload(args.kind, {
+    type: args.mimeType,
+    name: args.filename,
+    size: args.data.byteLength,
+  });
+  if (!checked.ok) throw new Error(checked.error);
+  const mime = checked.mime;
   const clip = must(await db().from("clips").select("*").eq("id", args.clipId).single(), "clip") as Clip;
   const ext = EXT_BY_MIME[mime] ?? mime.split("/")[1] ?? "bin";
   const path = `${clip.project_id}/${clip.id}/${randomUUID()}.${ext}`;

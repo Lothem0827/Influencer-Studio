@@ -70,9 +70,13 @@ export function IdeaForm({
                 name="idea"
                 rows={4}
                 required
+                minLength={3}
                 placeholder="e.g. A comforting reminder for tired people that resting is not quitting."
                 disabled={pending}
               />
+              <FieldDescription>
+                One sentence is enough. At least a few words so the model has something to write from.
+              </FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="title">Project title (optional)</FieldLabel>

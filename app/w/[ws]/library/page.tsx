@@ -5,7 +5,7 @@ import { DeleteProjectButton } from "@/components/library/delete-project-button"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -134,9 +134,24 @@ export default async function LibraryPage({
             <EmptyMedia variant="icon">
               <FolderSearch />
             </EmptyMedia>
-            <EmptyTitle>No projects match</EmptyTitle>
-            <EmptyDescription>Try a different search or clear the filters.</EmptyDescription>
+            <EmptyTitle>{sp.q || sp.pillar || sp.status || sp.tag ? "No projects match" : "No projects yet"}</EmptyTitle>
+            <EmptyDescription>
+              {sp.q || sp.pillar || sp.status || sp.tag
+                ? "Try a different search or clear the filters."
+                : "Start from an idea. Finished stills show up here as thumbnails."}
+            </EmptyDescription>
           </EmptyHeader>
+          <EmptyContent>
+            {sp.q || sp.pillar || sp.status || sp.tag ? (
+              <Button asChild variant="outline">
+                <Link href={`/w/${ws}/library`}>Clear filters</Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href={`/w/${ws}/new`}>New project</Link>
+              </Button>
+            )}
+          </EmptyContent>
         </Empty>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

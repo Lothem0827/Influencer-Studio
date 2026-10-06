@@ -14,9 +14,11 @@ import { CopyButton } from "@/components/copy-button";
 import { SavePromptDialog } from "@/components/prompts/save-prompt-dialog";
 import { AssetSlot, type AssetWithUrl } from "@/components/media/asset-slot";
 import { SendAllButton, SendToFlowButton } from "@/components/send-to-flow";
+import { DiscardEditsButton } from "@/components/confirm-delete";
 import { ErrorNote, useRun } from "@/components/use-run";
 import { WarningList } from "@/components/wizard/stills-board";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge, type badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,12 +118,23 @@ export function VideosBoard({
             <RefreshCw data-icon="inline-start" /> Regenerate all
           </Button>
           <SendAllButton projectId={projectId} kind="video" clipIds={clips.map((c) => c.id)} />
-          <Button asChild variant="secondary">
-            <Link href={`/w/${workspaceSlug}/p/${projectId}/finish`}>Finish</Link>
+          <Button asChild variant={doneCount === clips.length ? "secondary" : "outline"}>
+            <Link href={`/w/${workspaceSlug}/p/${projectId}/finish`}>
+              {doneCount === clips.length ? "Finish" : "Finish anyway"}
+            </Link>
           </Button>
         </div>
       </div>
-      <ErrorNote message={batchError} />
+      <ErrorNote message={batchError} onDismiss={() => setBatchError(null)} />
+      {clips.length > 0 && withImage.length < clips.length ? (
+        <Alert variant="warning">
+          <AlertTitle>Stills still missing</AlertTitle>
+          <AlertDescription>
+            Add a still for every clip before writing video prompts. Hover a still slot and paste from Flow, or upload
+            a file.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {/* Clip status board */}
       <Card size="sm">
@@ -310,9 +323,7 @@ function ClipCard({
                   >
                     <Check data-icon="inline-start" /> Save as new version
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-                    Cancel
-                  </Button>
+                  <DiscardEditsButton dirty={draft !== current.body} onDiscard={() => setEditing(false)} />
                 </>
               ) : (
                 <>

@@ -2,7 +2,9 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { X } from "lucide-react";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 type Res = { ok: boolean; error?: string; data?: unknown };
 
@@ -35,11 +37,27 @@ export function useRun() {
   return { run, pending, error, setError };
 }
 
-export function ErrorNote({ message }: { message: string | null }) {
+export function ErrorNote({
+  message,
+  onDismiss,
+  title = "Couldn’t finish that",
+}: {
+  message: string | null;
+  onDismiss?: () => void;
+  title?: string;
+}) {
   if (!message) return null;
   return (
     <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
       <AlertDescription>{message}</AlertDescription>
+      {onDismiss ? (
+        <AlertAction>
+          <Button size="icon-sm" variant="ghost" onClick={onDismiss} aria-label="Dismiss error">
+            <X />
+          </Button>
+        </AlertAction>
+      ) : null}
     </Alert>
   );
 }

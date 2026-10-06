@@ -4,6 +4,7 @@ import { createWorkspace } from "@/app/actions/studio";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { isConfigured, listWorkspaces } from "@/lib/server/data";
@@ -42,7 +43,8 @@ function SetupNeeded({ error }: { error?: string }) {
   );
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error: formError } = await searchParams;
   if (!isConfigured()) return <SetupNeeded />;
   let workspaces;
   try {
@@ -63,21 +65,40 @@ export default async function Home() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {workspaces.map((w) => (
-          <Link key={w.id} href={`/w/${w.slug}`} className="group">
-            <Card className="transition-colors group-hover:ring-primary/60">
-              <CardHeader>
-                <CardTitle className="text-base">{w.name}</CardTitle>
-                <CardDescription>{w.niche ?? "No niche set"}</CardDescription>
-                <CardAction>
-                  <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary" />
-                </CardAction>
-              </CardHeader>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {formError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Couldn’t create that workspace</AlertTitle>
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {workspaces.length === 0 ? (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Sparkles />
+            </EmptyMedia>
+            <EmptyTitle>No workspaces yet</EmptyTitle>
+            <EmptyDescription>Create one below, then start a project from an idea.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {workspaces.map((w) => (
+            <Link key={w.id} href={`/w/${w.slug}`} className="group">
+              <Card className="transition-colors group-hover:ring-primary/60">
+                <CardHeader>
+                  <CardTitle className="text-base">{w.name}</CardTitle>
+                  <CardDescription>{w.niche ?? "No niche set"}</CardDescription>
+                  <CardAction>
+                    <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary" />
+                  </CardAction>
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <Card>
         <CardHeader>

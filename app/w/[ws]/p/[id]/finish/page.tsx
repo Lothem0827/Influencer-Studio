@@ -22,6 +22,7 @@ export default async function FinishPage({ params }: { params: Promise<{ ws: str
     <FinishPanel
       key={caption ? `${caption.id}:${caption.caption.length}:${caption.hashtags.join()}` : "none"}
       projectId={id}
+      workspaceSlug={ws}
       tags={project.tags ?? []}
       caption={caption}
       clipCount={clips.length}
