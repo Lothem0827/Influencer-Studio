@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -31,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatBytes, MAX_UPLOAD_BYTES, pickMatchingFile, validateUpload } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import type { Asset } from "@/lib/supabase/types";
 
@@ -47,6 +48,7 @@ export function AssetSlot({
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const hovered = useRef(false);
   const { run, pending: acting, error: actionError } = useRun();
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -56,8 +58,9 @@ export function AssetSlot({
   const others = assets.filter((a) => a.id !== selected?.id);
 
   async function upload(file: File, source: "paste" | "upload") {
-    if (!file.type.startsWith(`${kind}/`)) {
-      setError(`That is not a${kind === "image" ? "n image" : " video"} file.`);
+    const checked = validateUpload(kind, file);
+    if (!checked.ok) {
+      setError(checked.error);
       return;
     }
     setError(null);
@@ -70,8 +73,7 @@ export function AssetSlot({
       fd.set("file", file);
       const res = await fetch("/api/assets", { method: "POST", body: fd });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok)
-        throw new Error(body.error ?? `Upload failed (${res.status})`);
+      if (!res.ok) throw new Error(body.error ?? `Upload failed (${res.status})`);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
@@ -80,25 +82,53 @@ export function AssetSlot({
     }
   }
 
-  function onPaste(e: React.ClipboardEvent) {
-    const item = [...e.clipboardData.items].find((i) =>
-      i.type.startsWith(`${kind}/`),
-    );
-    const file = item?.getAsFile();
-    if (file) {
-      e.preventDefault();
-      void upload(file, "paste");
+  function takeFile(list: FileList | File[] | null, source: "paste" | "upload") {
+    if (!list || list.length === 0) return;
+    const files = [...list];
+    const file = pickMatchingFile(kind, files);
+    if (!file) return;
+    if (files.length > 1 && !validateUpload(kind, file).ok) {
+      setError(`That drop didn’t include a ${kind} file.`);
+      return;
     }
+    void upload(file, source);
   }
 
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      if (!hovered.current) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest("input, textarea, [contenteditable=true]")) return;
+      const files = [...(e.clipboardData?.items ?? [])]
+        .map((i) => i.getAsFile())
+        .filter((f): f is File => Boolean(f));
+      if (!files.length) return;
+      e.preventDefault();
+      takeFile(files, "paste");
+    }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  });
+
   const Icon = kind === "image" ? ImagePlus : Video;
+  const limit = formatBytes(MAX_UPLOAD_BYTES[kind]);
 
   return (
     <div className="flex flex-col gap-2">
       <div
         tabIndex={0}
-        onPaste={onPaste}
-        onMouseEnter={(e) => e.currentTarget.focus({ preventScroll: true })}
+        onMouseEnter={() => {
+          hovered.current = true;
+        }}
+        onMouseLeave={() => {
+          hovered.current = false;
+        }}
+        onFocus={() => {
+          hovered.current = true;
+        }}
+        onBlur={() => {
+          hovered.current = false;
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -107,8 +137,7 @@ export function AssetSlot({
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          const file = e.dataTransfer.files[0];
-          if (file) void upload(file, "upload");
+          takeFile(e.dataTransfer.files, "upload");
         }}
         className={cn(
           "relative flex aspect-[9/16] max-h-80 w-full items-center justify-center overflow-hidden rounded-lg border border-dashed bg-muted/30 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -134,8 +163,9 @@ export function AssetSlot({
           <div className="flex flex-col items-center gap-2 px-3 text-center text-xs text-muted-foreground">
             <Icon className="size-6" />
             {kind === "image"
-              ? "Paste (Ctrl+V), drop, or pick the still from Flow"
+              ? "Hover and paste (Ctrl+V), drop, or pick the still from Flow"
               : "Drop or pick the finished video"}
+            <span>Up to {limit}</span>
           </div>
         )}
         {uploading ? (
@@ -152,8 +182,7 @@ export function AssetSlot({
           accept={`${kind}/*`}
           hidden
           onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void upload(f, "upload");
+            takeFile(e.target.files, "upload");
             e.target.value = "";
           }}
         />
@@ -181,7 +210,7 @@ export function AssetSlot({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete this {kind}?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This removes the {kind} from the clip.
+                  This removes the {kind} from the clip. Other versions stay available.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -257,7 +286,7 @@ export function AssetSlot({
           ))}
         </div>
       ) : null}
-      <ErrorNote message={error ?? actionError} />
+      <ErrorNote message={error ?? actionError} onDismiss={() => setError(null)} />
     </div>
   );
 }

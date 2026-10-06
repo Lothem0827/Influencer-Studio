@@ -113,9 +113,9 @@ const ScriptEdit = z.object({
   clips: z
     .array(
       z.object({
-        dialogue: z.string(),
+        dialogue: z.string().trim().min(1, "Every clip needs dialogue"),
         action: z.string(),
-        duration_s: z.number().int().min(1).max(30),
+        duration_s: z.number().int().min(2).max(30),
       }),
     )
     .min(1)
@@ -180,6 +180,35 @@ export async function restorePromptAction(promptId: string, projectId: string): 
     await restorePrompt(z.string().uuid().parse(promptId));
   });
   refresh(projectId);
+  return res;
+}
+
+export async function updateProjectBriefAction(input: {
+  projectId: string;
+  title: string;
+  idea: string;
+  pillar: string | null;
+}): Promise<ActionResult> {
+  const args = z
+    .object({
+      projectId: z.string().uuid(),
+      title: z.string().trim().min(1).max(120),
+      idea: z.string().trim().min(3, "Write at least a few words"),
+      pillar: z.string().trim().nullable(),
+    })
+    .parse(input);
+  const res = await safe(async () => {
+    must(
+      await db()
+        .from("projects")
+        .update({ title: args.title, idea: args.idea, pillar: args.pillar })
+        .eq("id", args.projectId)
+        .select("id")
+        .single(),
+      "update project",
+    );
+  });
+  refresh(args.projectId);
   return res;
 }
 

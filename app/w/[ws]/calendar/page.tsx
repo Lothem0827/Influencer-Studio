@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { addScheduledPost, deleteScheduledPost, setScheduledStatus } from "@/app/actions/extras";
+import { ConfirmDeleteForm } from "@/components/confirm-delete";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ export default async function CalendarPage({
                               ) : (
                                 <span />
                               )}
-                              <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                              <div className="flex items-center opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                 <form action={setScheduledStatus}>
                                   {hidden}
                                   <input type="hidden" name="id" value={p.id} />
@@ -154,13 +155,19 @@ export default async function CalendarPage({
                                     {p.status === "posted" ? "undo" : "posted"}
                                   </Button>
                                 </form>
-                                <form action={deleteScheduledPost}>
+                                <ConfirmDeleteForm
+                                  action={deleteScheduledPost}
+                                  title="Remove this planned post?"
+                                  description="This does not delete the linked project."
+                                  trigger={
+                                    <Button type="button" variant="ghost" size="icon-xs" aria-label="Delete post" className="text-destructive">
+                                      <Trash2 />
+                                    </Button>
+                                  }
+                                >
                                   {hidden}
                                   <input type="hidden" name="id" value={p.id} />
-                                  <Button type="submit" variant="ghost" size="icon-xs" aria-label="Delete post" className="text-destructive">
-                                    <Trash2 />
-                                  </Button>
-                                </form>
+                                </ConfirmDeleteForm>
                               </div>
                             </div>
                           </div>

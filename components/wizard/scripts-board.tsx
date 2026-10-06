@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, FileText, History, Pencil, Plus, RefreshCw, Sparkles, Trash2, X } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   saveScriptAction,
 } from "@/app/actions/wizard";
 import { ErrorNote, useRun } from "@/components/use-run";
+import { DiscardEditsButton } from "@/components/confirm-delete";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
@@ -27,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -63,9 +64,23 @@ export function ScriptsBoard({
   initialError: string | null;
   entries: Entry[];
 }) {
-  const { run, pending, error } = useRun();
+  const { run, pending, error, setError } = useRun();
   const [count, setCount] = useState(3);
   const [steer, setSteer] = useState("");
+  const [banner, setBanner] = useState(initialError);
+
+  useEffect(() => {
+    if (!initialError || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("error")) {
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, [initialError]);
+
+  function generate() {
+    run(() => generateScriptsAction({ projectId, count, steerNote: steer || undefined }));
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,12 +121,7 @@ export function ScriptsBoard({
               onChange={(e) => setSteer(e.target.value)}
             />
           </Field>
-          <Button
-            disabled={pending}
-            onClick={() =>
-              run(() => generateScriptsAction({ projectId, count, steerNote: steer || undefined }))
-            }
-          >
+          <Button disabled={pending} onClick={generate}>
             {pending ? (
               <Spinner data-icon="inline-start" />
             ) : entries.length ? (
@@ -124,7 +134,13 @@ export function ScriptsBoard({
         </div>
       </div>
 
-      <ErrorNote message={error ?? initialError} />
+      <ErrorNote
+        message={error ?? banner}
+        onDismiss={() => {
+          setError(null);
+          setBanner(null);
+        }}
+      />
       {entries.some((e) => e.current.id === pickedScriptId) ? (
         <p className="text-xs text-muted-foreground">
           The picked script is kept when you regenerate all. Regenerate it individually to replace it.
@@ -138,8 +154,18 @@ export function ScriptsBoard({
               <FileText />
             </EmptyMedia>
             <EmptyTitle>No scripts yet</EmptyTitle>
-            <EmptyDescription>Generate some from the idea.</EmptyDescription>
+            <EmptyDescription>
+              {banner
+                ? "The project was saved. Generate again when you’re ready."
+                : "Generate options from the idea, then pick one to lock in."}
+            </EmptyDescription>
           </EmptyHeader>
+          <EmptyContent>
+            <Button disabled={pending} onClick={generate}>
+              {pending ? <Spinner data-icon="inline-start" /> : <Sparkles data-icon="inline-start" />}
+              Generate scripts
+            </Button>
+          </EmptyContent>
         </Empty>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -237,6 +263,9 @@ function ScriptCard({
   }
 
   function pick() {
+    if (s.body.clips.some((c) => !c.dialogue.trim())) {
+      return;
+    }
     run(() => pickScriptAction(s.id), () => router.push(`/w/${workspaceSlug}/p/${projectId}/stills`));
   }
 
@@ -285,12 +314,12 @@ function ScriptCard({
                         <span className="flex items-center gap-1">
                           <Input
                             type="number"
-                            min={1}
+                            min={2}
                             max={maxClipSeconds}
                             value={c.duration_s}
                             onChange={(e) =>
                               updateClip(i, {
-                                duration_s: Math.min(maxClipSeconds, Math.max(1, Number(e.target.value) || 1)),
+                                duration_s: Math.min(maxClipSeconds, Math.max(2, Number(e.target.value) || 2)),
                               })
                             }
                             className="h-7 w-16 px-2 text-xs"
@@ -420,7 +449,7 @@ function ScriptCard({
             <>
               <Button
                 size="sm"
-                disabled={disabled}
+                disabled={disabled || !title.trim() || clips.some((c) => !c.dialogue.trim())}
                 onClick={() =>
                   run(
                     () => saveScriptAction({ scriptId: s.id, projectId, title, hook, clips }),
@@ -430,9 +459,10 @@ function ScriptCard({
               >
                 <Check data-icon="inline-start" /> Save
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-                Cancel
-              </Button>
+              <DiscardEditsButton
+                dirty={title !== s.title || hook !== s.hook || JSON.stringify(clips) !== JSON.stringify(s.body.clips)}
+                onDiscard={() => setEditing(false)}
+              />
             </>
           ) : (
             <>
@@ -450,7 +480,11 @@ function ScriptCard({
               {confirmPick ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button size="sm" disabled={disabled} variant={picked ? "secondary" : "default"}>
+                    <Button
+                      size="sm"
+                      disabled={disabled || s.body.clips.some((c) => !c.dialogue.trim())}
+                      variant={picked ? "secondary" : "default"}
+                    >
                       {pickLabel}
                     </Button>
                   </AlertDialogTrigger>
@@ -468,7 +502,12 @@ function ScriptCard({
                   </AlertDialogContent>
                 </AlertDialog>
               ) : (
-                <Button size="sm" disabled={disabled} variant={picked ? "secondary" : "default"} onClick={pick}>
+                <Button
+                  size="sm"
+                  disabled={disabled || s.body.clips.some((c) => !c.dialogue.trim())}
+                  variant={picked ? "secondary" : "default"}
+                  onClick={pick}
+                >
                   {pickLabel}
                 </Button>
               )}

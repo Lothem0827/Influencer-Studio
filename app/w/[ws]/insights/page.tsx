@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { addMetric, deleteMetric } from "@/app/actions/extras";
+import { ConfirmDeleteForm } from "@/components/confirm-delete";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -154,6 +155,9 @@ export default async function InsightsPage({ params }: { params: Promise<{ ws: s
           <CardTitle>Log a post</CardTitle>
         </CardHeader>
         <CardContent>
+          {projects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Create a project first, then log how the post performed.</p>
+          ) : (
           <form action={addMetric}>
             {hidden}
             <FieldGroup className="sm:grid sm:grid-cols-3 lg:grid-cols-6">
@@ -211,6 +215,7 @@ export default async function InsightsPage({ params }: { params: Promise<{ ws: s
               </div>
             </FieldGroup>
           </form>
+          )}
         </CardContent>
       </Card>
 
@@ -225,13 +230,19 @@ export default async function InsightsPage({ params }: { params: Promise<{ ws: s
               <Badge variant="secondary">{m.platform}</Badge>
               <span className="w-24 text-right text-muted-foreground">{fmt(m.views)} views</span>
               <span className="w-24 text-right text-muted-foreground">{rate(m).toFixed(1)}%</span>
-              <form action={deleteMetric}>
+              <ConfirmDeleteForm
+                action={deleteMetric}
+                title="Delete this log entry?"
+                description="This only removes the performance numbers, not the project."
+                trigger={
+                  <Button size="icon-sm" variant="ghost" type="button" aria-label="Delete entry">
+                    <Trash2 />
+                  </Button>
+                }
+              >
                 {hidden}
                 <input type="hidden" name="id" value={m.id} />
-                <Button size="icon-sm" variant="ghost" type="submit" aria-label="Delete entry">
-                  <Trash2 />
-                </Button>
-              </form>
+              </ConfirmDeleteForm>
             </div>
           ))}
           {metrics.length === 0 ? <p className="text-sm text-muted-foreground">No entries yet.</p> : null}

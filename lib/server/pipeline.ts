@@ -263,7 +263,7 @@ export async function updateScript(
   const cap = maxClipSecondsFor(project.target_model);
   const clips = patch.clips.map((c) => ({
     ...c,
-    duration_s: Math.min(Math.max(c.duration_s, 1), cap),
+    duration_s: Math.min(Math.max(c.duration_s, 2), cap),
   }));
   const s = must(
     await db()

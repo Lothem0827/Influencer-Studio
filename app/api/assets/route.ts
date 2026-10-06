@@ -41,12 +41,14 @@ export async function POST(req: Request) {
       flow_url: form.get("flow_url") || undefined,
       queue_id: form.get("queue_id") || undefined,
     });
+    const filename = "name" in file && typeof file.name === "string" ? file.name : undefined;
     const asset = await saveAsset({
       clipId: meta.clip_id,
       kind: meta.kind,
       source: meta.source,
       data: await file.arrayBuffer(),
       mimeType: file.type,
+      filename,
       flowUrl: meta.flow_url,
     });
     if (meta.queue_id) {

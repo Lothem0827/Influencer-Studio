@@ -22,24 +22,16 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { validateUpload } from "@/lib/media";
 import type { PromptKind, SavedPrompt } from "@/lib/supabase/types";
 
 export type SavedPromptItem = SavedPrompt & { sampleUrl: string | null };
 
-const LIMIT: Record<PromptKind, number> = {
-  still: 20 * 1024 * 1024,
-  video: 200 * 1024 * 1024,
-};
-
 function sampleError(kind: PromptKind, file: File): string | null {
-  const expected = kind === "still" ? "image/" : "video/";
-  if (!file.type.startsWith(expected)) {
-    return kind === "still" ? "The sample needs to be an image." : "The sample needs to be a video.";
-  }
-  if (file.size > LIMIT[kind]) {
-    return kind === "still" ? "Images must be 20 MB or smaller." : "Videos must be 200 MB or smaller.";
-  }
-  return null;
+  const mediaKind = kind === "still" ? "image" : "video";
+  const res = validateUpload(mediaKind, file);
+  if (res.ok) return null;
+  return res.error;
 }
 
 export function SavePromptDialog({

@@ -14,6 +14,7 @@ import {
   saveWorkspaceBasics,
   setDefaultTemplate,
 } from "@/app/actions/studio";
+import { ConfirmDeleteForm } from "@/components/confirm-delete";
 import { SubmitButton } from "@/components/submit-button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -192,13 +193,19 @@ export default async function StudioPage({ params }: { params: Promise<{ ws: str
                   Save
                 </SubmitButton>
               </form>
-              <form action={deleteHouseRule}>
+              <ConfirmDeleteForm
+                action={deleteHouseRule}
+                title="Delete this house rule?"
+                description="Prompts generated after this will no longer include it."
+                trigger={
+                  <Button size="icon" variant="ghost" type="button" aria-label="Delete rule">
+                    <Trash2 />
+                  </Button>
+                }
+              >
                 <input type="hidden" name="id" value={r.id} />
                 <input type="hidden" name="slug" value={ws} />
-                <Button size="icon" variant="ghost" type="submit" aria-label="Delete rule">
-                  <Trash2 />
-                </Button>
-              </form>
+              </ConfirmDeleteForm>
             </div>
           ))}
           <form action={addHouseRule} className="flex items-start gap-2 pt-2">
@@ -235,13 +242,19 @@ export default async function StudioPage({ params }: { params: Promise<{ ws: str
                   Save
                 </SubmitButton>
               </form>
-              <form action={deletePreset}>
+              <ConfirmDeleteForm
+                action={deletePreset}
+                title={`Delete “${p.name}”?`}
+                description="Clips using this preset keep the text already in their prompts."
+                trigger={
+                  <Button size="icon" variant="ghost" type="button" aria-label="Delete preset">
+                    <Trash2 />
+                  </Button>
+                }
+              >
                 <input type="hidden" name="id" value={p.id} />
                 <input type="hidden" name="slug" value={ws} />
-                <Button size="icon" variant="ghost" type="submit" aria-label="Delete preset">
-                  <Trash2 />
-                </Button>
-              </form>
+              </ConfirmDeleteForm>
             </div>
           ))}
           <form action={addPreset} className="grid gap-2 pt-2 sm:grid-cols-[9rem_14rem_1fr_auto]">
@@ -311,13 +324,19 @@ export default async function StudioPage({ params }: { params: Promise<{ ws: str
                       </form>
                     ) : null}
                     {t.workspace_id !== null ? (
-                      <form action={deleteTemplate}>
+                      <ConfirmDeleteForm
+                        action={deleteTemplate}
+                        title={`Delete template “${t.name}”?`}
+                        description="This only removes the workspace copy. Global templates stay."
+                        trigger={
+                          <Button size="sm" variant="destructive" type="button">
+                            Delete
+                          </Button>
+                        }
+                      >
                         <input type="hidden" name="id" value={t.id} />
                         <input type="hidden" name="slug" value={ws} />
-                        <Button size="sm" variant="destructive" type="submit">
-                          Delete
-                        </Button>
-                      </form>
+                      </ConfirmDeleteForm>
                     ) : null}
                   </div>
                 </AccordionContent>

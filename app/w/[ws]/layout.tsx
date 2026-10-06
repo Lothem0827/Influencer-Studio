@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { getWorkspaceBySlug, listWorkspaces } from "@/lib/server/data";
+import { getWorkspaceBySlug, isConfigured, listWorkspaces } from "@/lib/server/data";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export default async function WorkspaceLayout({
   params: Promise<{ ws: string }>;
 }) {
   const { ws } = await params;
+  if (!isConfigured()) redirect("/");
   const workspace = await getWorkspaceBySlug(ws);
   if (!workspace) notFound();
   const all = await listWorkspaces();
