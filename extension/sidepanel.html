@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Influencer Studio</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 12px; background: #0b0b0f; color: #ececf1; font: 13px/1.4 system-ui, sans-serif; }
+      h1 { font-size: 14px; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
+      h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #9a9aae; margin: 16px 0 6px; }
+      button, input, select { font: inherit; }
+      button { background: #22222e; color: inherit; border: 1px solid #272735; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+      button:hover { background: #2c2c3a; }
+      button.primary { background: #a78bfa; color: #0b0b0f; border-color: #a78bfa; font-weight: 600; }
+      button.primary:hover { background: #c4b5fd; }
+      input, select { width: 100%; background: #14141b; color: inherit; border: 1px solid #272735; border-radius: 6px; padding: 6px 8px; }
+      label { display: block; font-size: 11px; color: #9a9aae; margin: 6px 0 2px; }
+      .card { background: #14141b; border: 1px solid #272735; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+      .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+      .meta { color: #9a9aae; font-size: 11px; }
+      .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; background: #272735; }
+      .badge.still { background: rgba(167,139,250,.2); color: #c4b5fd; }
+      .badge.video { background: rgba(74,222,128,.15); color: #86efac; }
+      .badge.sent { background: rgba(251,191,36,.15); color: #fbbf24; }
+      pre { white-space: pre-wrap; margin: 6px 0; font: 11px/1.4 ui-monospace, monospace; color: #c9c9d6; max-height: 90px; overflow: hidden; }
+      .err { color: #f87171; }
+      .ok { color: #4ade80; }
+      .target { border-color: #a78bfa; }
+      details > summary { cursor: pointer; color: #9a9aae; }
+    </style>
+  </head>
+  <body>
+    <h1>
+      <span>Influencer Studio</span>
+      <button id="refresh" title="Refresh queue">Refresh</button>
+    </h1>
+    <div id="status" class="meta"></div>
+
+    <h2>Queue</h2>
+    <div id="queue"></div>
+
+    <h2>Use this: target clip</h2>
+    <div class="card" id="target-card">
+      <div class="meta" id="target-current">No target selected.</div>
+      <label for="target-select">Or choose a clip manually</label>
+      <select id="target-select"><option value="">-</option></select>
+    </div>
+    <p class="meta">Hover a result in Flow and click <b>Use this</b> to send it to the target clip. Generate is always yours to press.</p>
+
+    <h2>Settings</h2>
+    <details class="card">
+      <summary>Connection</summary>
+      <label for="origin">App URL</label>
+      <input id="origin" placeholder="http://localhost:3000" />
+      <label for="token">Extension token (EXTENSION_API_TOKEN)</label>
+      <input id="token" type="password" placeholder="same value as in .env.local" />
+      <div class="row" style="margin-top: 8px"><button id="save" class="primary">Save</button><span id="save-msg" class="meta"></span></div>
+    </details>
+
+    <script type="module" src="/src/sidepanel.ts"></script>
+  </body>
+</html>

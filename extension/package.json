@@ -1,0 +1,16 @@
+{
+  "name": "influencer-studio-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build && vite build --config vite.content.config.ts",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.0",
+    "typescript": "^5",
+    "vite": "^7"
+  }
+}

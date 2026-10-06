@@ -1,0 +1,26 @@
+---
+description: Always build UI with shadcn components and the shadcn design system tokens
+alwaysApply: true
+---
+
+# shadcn/ui only
+
+All UI in this project uses shadcn/ui (Radix base, `radix-nova` style, `lucide-react` icons). Config is in `components.json`; components live in `components/ui/`.
+
+## Rules
+
+- **Use shadcn components for every UI element.** Check `components/ui/` first; if missing, add it with `pnpm dlx shadcn@latest add <name>` (search with `pnpm dlx shadcn@latest search`). Never hand-roll a button, input, select, card, badge, dialog, alert, table, tabs, tooltip, etc.
+- **Read docs before using a component:** `pnpm dlx shadcn@latest docs <component>`.
+- **Design tokens only.** Colors come from CSS variables in `app/globals.css` (`bg-primary`, `text-muted-foreground`, `bg-success/15`). No raw colors (`bg-blue-500`, `#fff`). Change the look by editing tokens, not components.
+- **Variants over custom styles.** `variant="outline"`, `size="sm"`. `className` is for layout only.
+- **Layout:** `flex flex-col gap-*`, never `space-x-*`/`space-y-*`. Use `size-*` when width equals height.
+- **Forms:** `FieldGroup` + `Field` + `FieldLabel` (with `htmlFor`/`id`) + `FieldDescription`. Use `NativeSelect` for selects submitted via `FormData`/server actions.
+- **Icons in buttons:** `data-icon="inline-start"` / `"inline-end"`, no sizing classes. Loading = `Spinner` + `disabled`.
+- **Feedback:** callouts use `Alert`, empty states use `Empty`, loading placeholders use `Skeleton`, confirmations use `AlertDialog` (never `confirm()`), toasts use `toast` from `sonner`.
+- **Overlays need titles:** `DialogTitle` / `AlertDialogTitle` / `SheetTitle` (`sr-only` if hidden).
+- **Composition:** full `Card` structure (`CardHeader`/`CardTitle`/`CardContent`), `TabsTrigger` inside `TabsList`, items inside their `Group`.
+
+## Gotchas
+
+- `cn` comes from `@/lib/utils`. The shadcn CLI may write `import { cn } from "cn"` and add a `cn` npm package; replace the import and remove the package.
+- Extending a component (e.g. the `success`/`warning` variants in `badge.tsx` and `alert.tsx`) is fine; do it via cva variants using semantic tokens.
